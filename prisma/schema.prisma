@@ -19,23 +19,30 @@ enum UserRole {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
   passwordHash String
   name         String
   surname      String
-  phoneNumber String   @unique
+  phoneNumber  String   @unique
   sex          String
   birthDate    String
   experience   String
   weight       Float?
-  imageUrl    String?
-  role         UserRole  @default(USER)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  imageUrl     String?
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   oauthAccounts OAuthAccount[]
   refreshTokens RefreshToken[]
+
+  // Нові зв'язки
+  purchases      Purchase[]
+  reviews        Review[]
+  progress       CourseProgress[]
+  moduleProgress ModuleProgress[]
+  lessonProgress LessonProgress[]
 }
 
 model OAuthAccount {
@@ -43,7 +50,7 @@ model OAuthAccount {
   provider   String // "google" або "facebook"
   providerId String // ID від провайдера
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int
 
   @@unique([provider, providerId])
@@ -57,4 +64,225 @@ model RefreshToken {
 
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+// Модель для курсів
+model Course {
+  id                    Int      @id @default(autoincrement())
+  title                 String
+  description           String   @db.Text
+  additionalDescription String?  @db.Text
+  targetAudience        String[]
+  duration              String // Наприклад, "4 тижні" або "10 годин"
+  price                 Float
+  imageUrl              String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Зв'язки
+  modules   Module[]
+  equipment CourseEquipment[] // Оновлений зв'язок
+  purchases Purchase[]
+  reviews   Review[]
+  progress  CourseProgress[]
+  benefits  CourseBenefits[]
+}
+
+// Модель для модулів
+model Module {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String  @db.Text
+  imageUrl    String?
+  orderIndex  Int // Для впорядкування модулів
+
+  // Зв'язки
+  course         Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId       Int
+  lessons        Lesson[]
+  moduleProgress ModuleProgress[]
+  equipment      ModuleEquipment[] // Обладнання для конкретного модуля
+
+  @@unique([courseId, orderIndex])
+}
+
+// Модель для уроків
+model Lesson {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String  @db.Text
+  videoUrl    String
+  imageUrl    String?
+  duration    Int // Тривалість в секундах
+  orderIndex  Int // Для впорядкування уроків
+
+  // Зв'язки
+  module         Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId       Int
+  lessonProgress LessonProgress[]
+  equipment      LessonEquipment[] // Обладнання для конкретного уроку
+
+  @@unique([moduleId, orderIndex])
+}
+
+// Модель для інвентаря
+model Equipment {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String? @db.Text
+  imageUrl    String?
+
+  // Зв'язок багато-до-багатьох з курсами
+  courses CourseEquipment[]
+  modules ModuleEquipment[]
+  lessons LessonEquipment[]
+}
+
+// Модель для зв'язку між курсом та інвентарем (проміжна таблиця)
+model CourseEquipment {
+  // Зв'язки
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId Int
+
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipmentId Int
+
+  // Опціональне поле для додаткової інформації
+  quantity Int     @default(1) // Кількість одиниць обладнання, необхідна для курсу
+  notes    String? @db.Text // Додаткові примітки для конкретного курсу
+
+  // Складений первинний ключ
+  @@id([courseId, equipmentId])
+}
+
+// Модель для бенефітів курсу
+model CourseBenefits {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String? @db.Text
+  imageUrl    String?
+
+  // Зв'язки
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId Int
+}
+
+// Модель для зв'язку між модулем та інвентарем
+model ModuleEquipment {
+  // Зв'язки
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId Int
+
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipmentId Int
+
+  // Додаткова інформація
+  quantity Int     @default(1)
+  notes    String? @db.Text
+
+  // Складений первинний ключ
+  @@id([moduleId, equipmentId])
+}
+
+model LessonEquipment {
+  // Зв'язки
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId Int
+
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipmentId Int
+
+  // Додаткова інформація
+  quantity Int     @default(1)
+  notes    String? @db.Text
+
+  // Складений первинний ключ
+  @@id([lessonId, equipmentId])
+}
+
+// Модель для відгуків
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int // Наприклад, від 1 до 5
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // Зв'язки
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId Int
+
+  @@unique([userId, courseId])
+}
+
+// Модель для покупок курсів
+model Purchase {
+  id            Int      @id @default(autoincrement())
+  purchaseDate  DateTime @default(now())
+  amount        Float
+  paymentMethod String?
+  paymentId     String? // Зовнішній ID від платіжної системи
+
+  // Зв'язки
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId Int
+
+  @@unique([userId, courseId])
+}
+
+// Моделі для відстеження прогресу
+
+// Прогрес курсу
+model CourseProgress {
+  id              Int       @id @default(autoincrement())
+  progressPercent Float     @default(0)
+  isCompleted     Boolean   @default(false)
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  // Зв'язки
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId Int
+
+  @@unique([userId, courseId])
+}
+
+// Прогрес модуля
+model ModuleProgress {
+  id              Int       @id @default(autoincrement())
+  progressPercent Float     @default(0)
+  isCompleted     Boolean   @default(false)
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  // Зв'язки
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId Int
+
+  @@unique([userId, moduleId])
+}
+
+// Прогрес уроку
+model LessonProgress {
+  id             Int       @id @default(autoincrement())
+  isCompleted    Boolean   @default(false)
+  watchedSeconds Int       @default(0)
+  lastPosition   Int       @default(0) // Секунда, на якій користувач зупинився
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  // Зв'язки
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId Int
+
+  @@unique([userId, lessonId])
 }
