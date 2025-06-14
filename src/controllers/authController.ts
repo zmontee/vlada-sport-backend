@@ -7,9 +7,20 @@ const authController = {
   register: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userData = req.body;
-      const newUser = await authService.registerUser(userData);
+      const { user, accessToken, refreshToken } =
+        await authService.registerUser(userData);
 
-      res.status(201).json({ message: 'Registration is successful', newUser });
+      // Set refresh token in cookies
+      res.cookie(
+        authConfig.cookies.refreshToken.name,
+        refreshToken,
+        authConfig.cookies.refreshToken.options
+      );
+
+      res.status(201).json({
+        user,
+        accessToken,
+      });
     } catch (error) {
       next(error);
     }
@@ -28,12 +39,25 @@ const authController = {
       const { passwordHash, id, ...userInfo } = user;
 
       res.json({
-        message: 'Login is successful',
-        data: {
-          user: userInfo,
-          accessToken: tokens.accessToken,
-        },
+        user: userInfo,
+        accessToken: tokens.accessToken,
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getSessionInfo: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (req.headers.authorization) {
+        const sessionInfo = await authService.getSessionInfo(
+          req.headers.authorization.split(' ')[1]
+        );
+
+        res.json(sessionInfo);
+      } else {
+        throw createHttpError(401, 'Authorization header is missing');
+      }
     } catch (error) {
       next(error);
     }
@@ -51,11 +75,7 @@ const authController = {
 
   refreshTokens: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log('emmmm');
-
       const refreshToken = req.cookies[authConfig.cookies.refreshToken.name];
-
-      console.log('refreshToken from cookies', refreshToken);
 
       if (!refreshToken) {
         throw createHttpError(401, 'Refresh token is missing');
@@ -69,10 +89,7 @@ const authController = {
         authConfig.cookies.refreshToken.options
       );
 
-      res.json({
-        status: 'success',
-        data: { accessToken: updatedTokens.accessToken },
-      });
+      res.json({ accessToken: updatedTokens.accessToken });
     } catch (error) {
       next(error);
     }

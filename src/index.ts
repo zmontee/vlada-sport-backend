@@ -1,10 +1,15 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { errorHandler } from '@/middlewares/errorHandler';
 import authRouter from '@/routes/auth';
 import userRouter from '@/routes/users';
-import cookieParser from 'cookie-parser';
+import cdnRouter from '@/routes/cdn';
+import courseRouter from '@/routes/courses';
+import purchaseRouter from '@/routes/purchase';
+import progress from '@/routes/progress';
+import progressRouter from '@/routes/progress';
 
 dotenv.config();
 
@@ -25,6 +30,10 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
+app.use('/cdn', cdnRouter);
+app.use('/courses', courseRouter);
+app.use('/purchase', purchaseRouter);
+app.use('/progress', progressRouter);
 
 app.use(errorHandler);
 

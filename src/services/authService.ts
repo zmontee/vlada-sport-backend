@@ -15,7 +15,13 @@ import { authConfig } from '@/utils/config/auth';
 import refreshTokenRepository from '@/repositories/refreshTokenRepository';
 
 const authService = {
-  registerUser: async (registerData: RegisterCredentialsDTO): Promise<User> => {
+  registerUser: async (
+    registerData: RegisterCredentialsDTO
+  ): Promise<{
+    user: Omit<User, 'passwordHash'>;
+    accessToken: string;
+    refreshToken: string;
+  }> => {
     try {
       const validatedData = RegisterSchema.parse(registerData);
 
@@ -26,12 +32,12 @@ const authService = {
         throw createHttpError(409, 'User with this email already exists');
       }
 
-      if (validatedData.phoneNumber) {
-        const phoneRegex = /^\+?[\d\s-]{10,}$/;
-        if (!phoneRegex.test(validatedData.phoneNumber)) {
-          throw createHttpError(400, 'Phone number validation error');
-        }
-      }
+      // if (validatedData.phoneNumber) {
+      //   const phoneRegex = /^\+?[\d\s-]{10,}$/;
+      //   if (!phoneRegex.test(validatedData.phoneNumber)) {
+      //     throw createHttpError(400, 'Phone number validation error');
+      //   }
+      // }
 
       const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
@@ -40,18 +46,36 @@ const authService = {
         passwordHash: hashedPassword,
         name: validatedData.name,
         surname: validatedData.surname,
-        phoneNumber: validatedData.phoneNumber,
         sex: validatedData.sex,
         birthDate: validatedData.birthDate,
         experience: validatedData.experience,
         role: UserRole.USER,
       });
 
-      const { passwordHash, ...user } = newUser;
-      return user;
+      // Generate tokens for the newly registered user
+      const tokens = await authService.generateTokens({
+        userId: newUser.id,
+        role: newUser.role,
+      });
+
+      // Store refresh token in the database
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await refreshTokenRepository.create(
+        newUser.id,
+        tokens.refreshToken,
+        expiresAt
+      );
+
+      // Remove sensitive data before returning
+      const { passwordHash, ...userInfo } = newUser;
+
+      return {
+        user: userInfo,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
     } catch (error) {
       console.error('Registration error:', error);
-
       throw error;
     }
   },
@@ -144,6 +168,27 @@ const authService = {
 
       if (error instanceof jwt.JsonWebTokenError) {
         throw createHttpError(401, 'Invalid refresh token');
+      }
+
+      throw error;
+    }
+  },
+
+  getSessionInfo: async (accessToken: string) => {
+    try {
+      const decoded = jwt.verify(
+        accessToken,
+        authConfig.jwt.accessToken.secret
+      ) as TokenPayload;
+
+      const user = await userRepository.findById(decoded.userId);
+
+      return user;
+    } catch (error) {
+      console.error('Get session info error:', error);
+
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw createHttpError(401, 'Invalid access token');
       }
 
       throw error;

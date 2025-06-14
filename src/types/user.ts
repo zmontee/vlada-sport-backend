@@ -20,12 +20,12 @@ export interface User {
 export interface CreateUserDTO {
   email: string;
   passwordHash: string; // Optional because OAuth users don't have passwords
-  name?: string;
-  surname?: string;
+  name: string;
+  surname: string;
   phoneNumber?: string;
   sex: string;
-  birthDate?: string;
-  experience?: string;
+  birthDate: string;
+  experience: string;
   weight?: number;
   role: UserRole;
   imageUrl?: string;

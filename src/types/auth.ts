@@ -31,7 +31,7 @@ export interface LoginCredentialsDTO {
 export interface RegisterCredentialsDTO extends LoginCredentialsDTO {
   name: string;
   surname: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   sex: string;
   birthDate: string;
   experience: string;

@@ -24,7 +24,7 @@ model User {
   passwordHash String
   name         String
   surname      String
-  phoneNumber  String   @unique
+  phoneNumber  String?  @unique
   sex          String
   birthDate    String
   experience   String
@@ -40,6 +40,7 @@ model User {
   // Нові зв'язки
   purchases      Purchase[]
   reviews        Review[]
+  generalReviews GeneralReview[]
   progress       CourseProgress[]
   moduleProgress ModuleProgress[]
   lessonProgress LessonProgress[]
@@ -72,6 +73,7 @@ model Course {
   title                 String
   description           String   @db.Text
   additionalDescription String?  @db.Text
+  level                 String   @default("Новачок")
   targetAudience        String[]
   duration              String // Наприклад, "4 тижні" або "10 годин"
   price                 Float
@@ -97,11 +99,12 @@ model Module {
   orderIndex  Int // Для впорядкування модулів
 
   // Зв'язки
-  course         Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId       Int
-  lessons        Lesson[]
-  moduleProgress ModuleProgress[]
-  equipment      ModuleEquipment[] // Обладнання для конкретного модуля
+  course            Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId          Int
+  lessons           Lesson[]
+  moduleProgress    ModuleProgress[]
+  equipment         ModuleEquipment[]
+  currentForCourses CourseProgress[]  @relation("CurrentModule")
 
   @@unique([courseId, orderIndex])
 }
@@ -156,15 +159,27 @@ model CourseEquipment {
 }
 
 // Модель для бенефітів курсу
-model CourseBenefits {
+model Benefit {
   id          Int     @id @default(autoincrement())
   name        String
   description String? @db.Text
   imageUrl    String?
 
   // Зв'язки
+  courses CourseBenefits[]
+}
+
+// Модель для бенефітів курсу
+model CourseBenefits {
+  // Зв'язки
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId Int
+
+  benefit   Benefit @relation(fields: [benefitId], references: [id], onDelete: Cascade)
+  benefitId Int
+
+  // Складений первинний ключ
+  @@id([courseId, benefitId])
 }
 
 // Модель для зв'язку між модулем та інвентарем
@@ -202,10 +217,12 @@ model LessonEquipment {
 
 // Модель для відгуків
 model Review {
-  id        Int      @id @default(autoincrement())
-  rating    Int // Наприклад, від 1 до 5
-  comment   String   @db.Text
-  createdAt DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  rating         Int
+  comment        String   @db.Text
+  beforePhotoUrl String?
+  afterPhotoUrl  String?
+  createdAt      DateTime @default(now())
 
   // Зв'язки
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -214,6 +231,19 @@ model Review {
   courseId Int
 
   @@unique([userId, courseId])
+}
+
+model GeneralReview {
+  id             Int      @id @default(autoincrement())
+  rating         Int
+  comment        String   @db.Text
+  beforePhotoUrl String?
+  afterPhotoUrl  String?
+  createdAt      DateTime @default(now())
+
+  // Зв'язок з користувачем
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 }
 
 // Модель для покупок курсів
@@ -249,6 +279,9 @@ model CourseProgress {
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId Int
 
+  currentModule   Module? @relation(name: "CurrentModule", fields: [currentModuleId], references: [id], onDelete: SetNull)
+  currentModuleId Int?
+
   @@unique([userId, courseId])
 }
 
@@ -257,6 +290,7 @@ model ModuleProgress {
   id              Int       @id @default(autoincrement())
   progressPercent Float     @default(0)
   isCompleted     Boolean   @default(false)
+  isLocked        Boolean   @default(true)
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
 
@@ -273,8 +307,8 @@ model ModuleProgress {
 model LessonProgress {
   id             Int       @id @default(autoincrement())
   isCompleted    Boolean   @default(false)
-  watchedSeconds Int       @default(0)
-  lastPosition   Int       @default(0) // Секунда, на якій користувач зупинився
+  isLocked       Boolean   @default(true)
+  position       Int       @default(0) // Позиція перегляду в секундах
   startedAt      DateTime  @default(now())
   completedAt    DateTime?
 
