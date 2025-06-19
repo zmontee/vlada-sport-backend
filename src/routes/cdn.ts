@@ -1,12 +1,12 @@
 // src/routes/cdn.ts
 import express from 'express';
 import { authenticateJWT } from '@/middlewares/auth';
-import { serveFile, upload, uploadFile } from '@/controllers/cdnController';
+import { serveFile } from '@/controllers/cdnController';
 
 const cdnRouter = express.Router();
 
 // Upload endpoint (admin only)
-cdnRouter.post('/upload', authenticateJWT, upload.single('file'), uploadFile);
+// cdnRouter.post('/upload', authenticateJWT, upload.single('file'), uploadFile);
 
 // Get image endpoint (public)
 cdnRouter.get('/:type/:fileName', serveFile);

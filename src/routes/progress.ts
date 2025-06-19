@@ -16,4 +16,10 @@ progressRouter.patch(
   progressController.completeLesson
 );
 
+progressRouter.patch(
+  '/modules/:moduleId/complete',
+  authenticateJWT,
+  progressController.completeModule
+);
+
 export default progressRouter;

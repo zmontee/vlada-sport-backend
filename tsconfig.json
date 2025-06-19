@@ -8,7 +8,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "noEmit": true,
+    "noEmit": false,
     "outDir": "./dist",
     "removeComments": true,
     "verbatimModuleSyntax": true,

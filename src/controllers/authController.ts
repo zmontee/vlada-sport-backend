@@ -38,8 +38,15 @@ const authController = {
 
       const { passwordHash, id, ...userInfo } = user;
 
+      const purchasedCourses = await authService.getUserPurchasedCourses(
+        user.id
+      );
+
       res.json({
-        user: userInfo,
+        user: {
+          ...userInfo,
+          purchasedCourses,
+        },
         accessToken: tokens.accessToken,
       });
     } catch (error) {
@@ -54,7 +61,15 @@ const authController = {
           req.headers.authorization.split(' ')[1]
         );
 
-        res.json(sessionInfo);
+        let purchasedCourses: number[] = [];
+
+        if (sessionInfo) {
+          purchasedCourses = await authService.getUserPurchasedCourses(
+            sessionInfo.id
+          );
+        }
+
+        res.json({ sessionInfo, purchasedCourses });
       } else {
         throw createHttpError(401, 'Authorization header is missing');
       }

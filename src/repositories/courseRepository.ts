@@ -372,6 +372,15 @@ const courseRepository = {
 
     return transformedLesson;
   },
+
+  findModuleOrderIndex: async (moduleId: number) => {
+    const module = await prisma.module.findUnique({
+      where: { id: moduleId },
+      select: { orderIndex: true },
+    });
+
+    return module;
+  },
 };
 
 export default courseRepository;

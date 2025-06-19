@@ -13,6 +13,7 @@ import { UserRole } from '@/types/user';
 import createHttpError from 'http-errors';
 import { authConfig } from '@/utils/config/auth';
 import refreshTokenRepository from '@/repositories/refreshTokenRepository';
+import purchaseRepository from '@/repositories/purchaseRepository';
 
 const authService = {
   registerUser: async (
@@ -200,6 +201,10 @@ const authService = {
     if (tokenDoc) {
       await refreshTokenRepository.delete(tokenDoc.id);
     }
+  },
+
+  getUserPurchasedCourses: async (userId: number) => {
+    return purchaseRepository.findUserPurchasedCourses(userId);
   },
 
   // verifyToken: async (token: string): Promise<TokenPayload> => {

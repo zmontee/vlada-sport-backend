@@ -38,6 +38,19 @@ const purchaseRepository = {
     });
   },
 
+  findUserPurchasedCourses: async (userId: number) => {
+    const purchases = await prisma.purchase.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        courseId: true,
+      },
+    });
+
+    return purchases.map(purchase => purchase.courseId);
+  },
+
   initializeCourseProgress: async (userId: number, courseId: number) => {
     // Start a transaction to ensure all progress records are created atomically
     return prisma.$transaction(async tx => {

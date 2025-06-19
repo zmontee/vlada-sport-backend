@@ -1,4 +1,9 @@
 import progressRepository from '@/repositories/progressRepository';
+import courseRepository from '@/repositories/courseRepository';
+import type {
+  CompleteLessonResult,
+  CompleteModuleResult,
+} from '@/types/progress';
 
 const progressService = {
   updateLessonProgress: async (
@@ -65,7 +70,7 @@ const progressService = {
       { isCompleted: true, position: 0 }
     );
 
-    const result: any = {
+    const result: CompleteLessonResult = {
       lessonProgress: updatedLessonProgress,
       moduleCompleted: false,
       courseCompleted: false,
@@ -172,6 +177,112 @@ const progressService = {
       result.moduleProgress = updatedModuleProgress;
 
       // Оновлюємо відсоток прогресу курсу
+      const courseProgressPercent =
+        await progressRepository.calculateCourseProgress(userId, courseId);
+
+      const updatedCourseProgress =
+        await progressRepository.updateCourseProgress(
+          userId,
+          courseId,
+          false,
+          courseProgressPercent
+        );
+
+      result.courseProgress = updatedCourseProgress;
+    }
+
+    return result;
+  },
+
+  completeModule: async (userId: number, moduleId: number) => {
+    const purchaseCheck = await progressRepository.checkUserHasPurchasedModule(
+      userId,
+      moduleId
+    );
+
+    if (!purchaseCheck) {
+      throw new Error('Module not found');
+    }
+
+    if (!purchaseCheck.hasPurchased) {
+      throw new Error(
+        'User has not purchased the course containing this module'
+      );
+    }
+
+    const courseId = purchaseCheck.courseId;
+
+    const lessons = await progressRepository.getAllModuleLessons(moduleId);
+    if (lessons.length === 0) {
+      throw new Error('No lessons found in this module');
+    }
+
+    const module = await courseRepository.findModuleOrderIndex(moduleId);
+
+    if (!module) {
+      throw new Error('Module not found');
+    }
+
+    const moduleOrderIndex = module.orderIndex;
+
+    const lessonProgressUpdates = await Promise.all(
+      lessons.map(lesson =>
+        progressRepository.updateLessonProgress(userId, lesson.id, {
+          isCompleted: true,
+          position: 0,
+        })
+      )
+    );
+
+    const updatedModuleProgress = await progressRepository.updateModuleProgress(
+      userId,
+      moduleId,
+      true,
+      100
+    );
+
+    const result: CompleteModuleResult = {
+      moduleCompleted: true,
+      moduleProgress: updatedModuleProgress,
+      lessonsCompleted: lessonProgressUpdates.length,
+    };
+
+    const unlockedModule = await progressRepository.unlockNextModule(
+      userId,
+      courseId,
+      moduleOrderIndex
+    );
+
+    if (unlockedModule) {
+      result.nextModuleUnlocked = unlockedModule.nextModuleId;
+
+      await progressRepository.updateCourseProgress(
+        userId,
+        courseId,
+        false,
+        undefined,
+        unlockedModule.nextModuleId
+      );
+    }
+
+    const allModulesCompleted =
+      await progressRepository.checkAllModulesInCourseCompleted(
+        userId,
+        courseId
+      );
+
+    if (allModulesCompleted) {
+      const updatedCourseProgress =
+        await progressRepository.updateCourseProgress(
+          userId,
+          courseId,
+          true,
+          100
+        );
+
+      result.courseCompleted = true;
+      result.courseProgress = updatedCourseProgress;
+    } else {
       const courseProgressPercent =
         await progressRepository.calculateCourseProgress(userId, courseId);
 

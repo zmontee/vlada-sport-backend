@@ -31,6 +31,30 @@ const progressRepository = {
     return { courseId, hasPurchased };
   },
 
+  checkUserHasPurchasedModule: async (userId: number, moduleId: number) => {
+    const result = await prisma.module.findUnique({
+      where: { id: moduleId },
+      select: {
+        course: {
+          select: {
+            id: true,
+            purchases: {
+              where: { userId },
+              select: { id: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!result) return null;
+
+    const courseId = result.course.id;
+    const hasPurchased = result.course.purchases.length > 0;
+
+    return { courseId, hasPurchased };
+  },
+
   getLessonWithModule: async (lessonId: number) => {
     return prisma.lesson.findUnique({
       where: { id: lessonId },
@@ -42,6 +66,15 @@ const progressRepository = {
             orderIndex: true,
           },
         },
+      },
+    });
+  },
+
+  getAllModuleLessons: async (moduleId: number) => {
+    return prisma.lesson.findMany({
+      where: { moduleId },
+      orderBy: {
+        orderIndex: 'asc',
       },
     });
   },

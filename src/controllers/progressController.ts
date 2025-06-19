@@ -83,6 +83,40 @@ const progressController = {
       }
     }
   },
+
+  completeModule: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
+      const moduleId = Number(req.params.moduleId);
+
+      if (!userId) {
+        throw createHttpError(401, 'User not authenticated');
+      }
+
+      if (isNaN(moduleId)) {
+        throw createHttpError(400, 'Invalid module ID');
+      }
+
+      const result = await progressService.completeModule(userId, moduleId);
+
+      res.json(result);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message ===
+          'User has not purchased the course containing this module'
+      ) {
+        next(
+          createHttpError(
+            403,
+            'User has not purchased the course containing this module'
+          )
+        );
+      } else {
+        next(error);
+      }
+    }
+  },
 };
 
 export default progressController;
