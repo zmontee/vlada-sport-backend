@@ -15,8 +15,6 @@ async function main() {
   console.log('Створення курсу 1...');
   const course1 = await createCourse1();
 
-  const course2 = await createCourse2();
-
   console.log('Створення базового обладнання...');
   const equipmentList = await createBaseEquipment();
 
@@ -24,76 +22,90 @@ async function main() {
   const equipmentIds = equipmentList.map(eq => eq.id);
 
   // Призначаємо деяке обладнання курсу (загальне обладнання)
-  await assignEquipmentToCourse(course1.id, [equipmentIds[0], equipmentIds[1]]);
-
-  // Призначаємо деяке обладнання курсу 2 (загальне обладнання)
-  await assignEquipmentToCourse(course2.id, [equipmentIds[0], equipmentIds[1]]);
+  await assignEquipmentToCourse(course1.id, equipmentIds);
 
   console.log('Створення модулів і уроків до курсу 1...');
   const modules1 = await createModulesAndLessonsCourse1(course1.id);
 
-  console.log('Створення модулів і уроків до курсу 2...');
-  const modules2 = await createModulesAndLessonsCourse2(course2.id);
+  const allLessons = await prisma.lesson.findMany({
+    where: {
+      module: {
+        courseId: course1.id,
+      },
+    },
+    orderBy: {
+      orderIndex: 'asc',
+    },
+  });
+
+  const lessonEquipmentMap = {
+    1: [equipmentIds[0]], // Гантелі (Усе тіло)
+    2: [equipmentIds[1]], // Плоский ролл (Гнучкість тазобедренних суглобів)
+    3: [equipmentIds[2]], // Резинка дя пілатесу (Мобільність грудного відділу і дихання)
+    4: [equipmentIds[3]], // М'яч для пілтесу (Прес і тазове дно)
+    5: [equipmentIds[1]], // Плоский ролл (МФР всього тіла)
+    6: [], // Функціональне тіло - немає екіпірування
+    7: [], // Прес і гнучкість хребта - немає екіпірування
+    8: [equipmentIds[0], equipmentIds[4]], // Гантелі, резинка кільцева (Сідниці ноги)
+    9: [equipmentIds[5], equipmentIds[6]], // 2 теннісні м'ячі, блок для йоги (МФР і мобільність стегон)
+    10: [equipmentIds[0]], // Гантелі (Пілатес на все тіло)
+    11: [equipmentIds[1]], // Плоский ролл (Легкість у всьому тілі)
+    12: [equipmentIds[1]], // Плоский ролл (Динамічний флоу)
+    13: [], // Сила і гнучкість - немає екіпірування
+    15: [equipmentIds[1]], // Плоский ролл (Вільна шия і плечі)
+    16: [equipmentIds[3]], // М'яч для пілатесу (Внутрішня частина і сідниці)
+    17: [equipmentIds[3]], // М'яч для пілатесу (Грудний відділ і хребет)
+    19: [equipmentIds[2]], // Резинка для пілатесу (Кісті,руки,шия)
+    21: [equipmentIds[1]], // Плоский ролл (Гнучкість тазобедренних)
+    22: [equipmentIds[2], equipmentIds[0]], // Резинка для пілатесу, гантелі (Сила спини)
+    23: [equipmentIds[3]], // М'яч для пілатесу (Внутрішній кор)
+    24: [equipmentIds[0], equipmentIds[3]], // Гантелі, м'яч для пілатесу (Челендж все тіло)
+    26: [equipmentIds[0], equipmentIds[3]], // Гантелі, м'яч для пілатесу (Челендж все тіло)
+    27: [], // Функціональне флоу - немає екіпірування
+  };
+
+  for (const lesson of allLessons) {
+    const equipmentForLesson = lessonEquipmentMap[lesson.orderIndex] || [];
+    console.log('equipmentForLesson:', equipmentForLesson);
+    if (equipmentForLesson.length > 0) {
+      await assignEquipmentToLesson(lesson.id, equipmentForLesson);
+    }
+  }
 
   console.log('Призначення обладнання модулям курсу 1...');
-  // Призначаємо обладнання першому модулю
-  await assignEquipmentToModule(modules1[0].id, [equipmentIds[2]]);
-  // Призначаємо обладнання другому модулю
+  await assignEquipmentToModule(modules1[0].id, [equipmentIds[0]]);
+
+  // Модуль 2: Сила та витривалість (уроки 2-6)
   await assignEquipmentToModule(modules1[1].id, [
-    equipmentIds[1],
-    equipmentIds[3],
+    equipmentIds[0], // Гантелі
+    equipmentIds[1], // Плоский ролл
+    equipmentIds[2], // Резинка для пілатесу
+    equipmentIds[3], // М'яч для пілатесу
   ]);
-  // Призначаємо обладнання третьому модулю
+
+  // Модуль 3: Баланс і гармонія (уроки 7-12)
   await assignEquipmentToModule(modules1[2].id, [
-    equipmentIds[2],
-    equipmentIds[3],
+    equipmentIds[0], // Гантелі
+    equipmentIds[1], // Плоский ролл
+    equipmentIds[4], // Резинка кільцева
+    equipmentIds[5], // Тенісний м'яч
+    equipmentIds[6], // Блок для йоги
   ]);
 
-  console.log('Призначення обладнання модулям курсу 2...');
-  await assignEquipmentToModule(modules2[0].id, [equipmentIds[2]]);
-  await assignEquipmentToModule(modules2[1].id, [
-    equipmentIds[1],
-    equipmentIds[3],
-  ]);
-  await assignEquipmentToModule(modules2[2].id, [
-    equipmentIds[2],
-    equipmentIds[3],
+  // Модуль 4: Рельєф і тонус (уроки 13-19)
+  await assignEquipmentToModule(modules1[3].id, [
+    equipmentIds[1], // Плоский ролл
+    equipmentIds[2], // Резинка для пілатесу
+    equipmentIds[3], // М'яч для пілатесу
   ]);
 
-  // Отримуємо перший урок першого модуля і призначаємо йому обладнання
-  const firstLesson1 = await prisma.lesson.findFirst({
-    where: {
-      moduleId: modules1[0].id,
-      orderIndex: 1,
-    },
-  });
-  if (firstLesson1) {
-    await assignEquipmentToLesson(firstLesson1.id, [equipmentIds[0]]);
-  }
-
-  // Отримуємо другий урок другого модуля і призначаємо йому обладнання
-  const secondModuleSecondLesson1 = await prisma.lesson.findFirst({
-    where: {
-      moduleId: modules1[1].id,
-      orderIndex: 2,
-    },
-  });
-  if (secondModuleSecondLesson1) {
-    await assignEquipmentToLesson(secondModuleSecondLesson1.id, [
-      equipmentIds[1],
-      equipmentIds[2],
-    ]);
-  }
-
-  const firstLesson2 = await prisma.lesson.findFirst({
-    where: {
-      moduleId: modules1[1].id,
-      orderIndex: 1,
-    },
-  });
-  if (firstLesson2) {
-    await assignEquipmentToLesson(firstLesson2.id, [equipmentIds[0]]);
-  }
+  // Модуль 5: Марафон енергії (уроки 21-27)
+  await assignEquipmentToModule(modules1[4].id, [
+    equipmentIds[0], // Гантелі
+    equipmentIds[1], // Плоский ролл
+    equipmentIds[2], // Резинка для пілатесу
+    equipmentIds[3], // М'яч для пілатесу
+  ]);
 
   console.log('Створення бенефітів...');
   const benefits = await createBenefits();
@@ -102,8 +114,6 @@ async function main() {
   const benefitIds = benefits.map(benefit => benefit.id);
 
   await assignBenefitsToCourse(course1.id, benefitIds);
-
-  await assignBenefitsToCourse(course2.id, benefitIds);
 
   console.log('Додавання демо-відгуку...');
   await createReview(adminUser.id, course1.id);
@@ -189,80 +199,27 @@ async function createCourse1() {
   });
 }
 
-async function createCourse2() {
-  return await prisma.course.create({
-    data: {
-      title: 'НейроФіт: Гнучка сила та внутрішня опора',
-      description: `Цей динамічний курс поєднує функціональні нейровправи,
-гнучку силу та координацію, допомагаючи вам розвинути
-гарний м’язовий тонус і рельєф без надзусиль. Це не
-просто тренування — це швидкий, захопливий рух, схожий
-на танець, що активізує не тільки тіло, а й внутрішню енергію.
-`,
-      additionalDescription:
-        'Відчуйте, як ваше тіло стає сильним, гнучким та граційним, рухаючись легко та природно!',
-      targetAudience: [
-        'Новачки',
-        'Зайняті люди',
-        'Мотивовані',
-        'Після перерви',
-        'Зміцнення',
-      ],
-      level: 'Середній',
-      duration: '1.5 місяці',
-      price: 1500,
-      imageUrl: '/cdn/images/course-2.jpg',
-    },
-  });
-}
-
 async function createModulesAndLessonsCourse1(courseId: number) {
   // Модуль 1: Швидкий старт
   const module1 = await prisma.module.create({
     data: {
       title: 'Ідеальний старт',
       description:
-        'Основи силових тренувань та балансу. Цей модуль допоможе вам розпочати шлях до кращої фізичної форми.',
-      imageUrl: '/cdn/images/module-demo.jpg',
+        'М’яке занурення в практику: готуємо тіло до навантажень, вивчаємо базові техніки дихання, активації м’язів і усвідомленого руху',
+      imageUrl: '/cdn/images/1-module_1-course.jpg',
       orderIndex: 1,
       courseId,
     },
   });
 
-  // Уроки для модуля 1
   await prisma.lesson.create({
     data: {
-      title: 'Вступне заняття',
-      description:
-        'Ознайомлення з програмою курсу, базовими концепціями та необхідним інвентарем.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 600, // 10 хвилин
+      title: 'Усе тіло',
+      description: 'Баланс сили, витривалості та мобільності в одному занятті',
+      videoUrl: 'https://vimeo.com/1102179222/4656f92779',
+      imageUrl: '/cdn/images/1-lesson_1-course.JPG',
+      duration: 724,
       orderIndex: 1,
-      moduleId: module1.id,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      title: 'Базова розминка',
-      description: 'Комплекс вправ для розминки перед основним тренуванням.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 900, // 15 хвилин
-      orderIndex: 2,
-      moduleId: module1.id,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      title: 'Перше тренування',
-      description: 'Базові вправи для розвитку сили та балансу.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 1800, // 30 хвилин
-      orderIndex: 3,
       moduleId: module1.id,
     },
   });
@@ -271,8 +228,8 @@ async function createModulesAndLessonsCourse1(courseId: number) {
     data: {
       title: 'Сила та витривалість',
       description:
-        "Розвиток сили основних груп м'язів за допомогою власної ваги та спеціальних вправ.",
-      imageUrl: '/cdn/images/module-demo.jpg',
+        'Прокачуємо м’язовий корсет, укріплюємо опору тіла, поступово збільшуючи інтенсивність та витривалість без перевантаження',
+      imageUrl: '/cdn/images/2-module_1-course.jpg',
       orderIndex: 2,
       courseId,
     },
@@ -281,61 +238,152 @@ async function createModulesAndLessonsCourse1(courseId: number) {
   // Уроки для модуля 2
   await prisma.lesson.create({
     data: {
-      title: 'Верхня частина тіла',
-      description: 'Комплекс вправ для розвитку сили рук, грудей та спини.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 2400, // 40 хвилин
-      orderIndex: 1,
-      moduleId: module2.id,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      title: 'Нижня частина тіла',
-      description: 'Комплекс вправ для розвитку сили ніг та сідниць.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 2400, // 40 хвилин
+      title: 'Гнучкість тазобедренних суглобів',
+      description:
+        'Ця практика допоможе відновити мобільність, покращити кровообіг у зоні тазу та зняти м’язову напругу',
+      videoUrl: 'https://vimeo.com/1102179959/0684150721',
+      imageUrl: '/cdn/images/2-lesson_1-course.JPG',
+      duration: 869,
       orderIndex: 2,
       moduleId: module2.id,
     },
   });
 
-  // Модуль 3: Баланс і координація
+  await prisma.lesson.create({
+    data: {
+      title: 'Мобільність грудного відділу і дихання',
+      description:
+        'Ця практика допоможе зняти напругу з плечей, покращити поставу та глибше дихати',
+      videoUrl: 'https://vimeo.com/1102180737/8c29deb385',
+      imageUrl: '/cdn/images/3-lesson_1-course.JPG',
+      duration: 834,
+      orderIndex: 3,
+      moduleId: module2.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Прес і тазове дно',
+      description:
+        'Глибока, усвідомлена робота з центром тіла — не тільки для рельєфу, а для внутрішньої сили, стабільності й жіночого здоров’я',
+      videoUrl: 'https://vimeo.com/1102181458/8865a0fd0c',
+      imageUrl: '/cdn/images/4-lesson_1-course.JPG',
+      duration: 677,
+      orderIndex: 4,
+      moduleId: module2.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'МФР всього тіла',
+      description:
+        'Глибоке розслаблення, відновлення та звільнення тіла від хронічної напруги',
+      videoUrl: 'https://vimeo.com/1102182094/cefa6ebef8',
+      imageUrl: '/cdn/images/5-lesson_1-course.JPG',
+      duration: 888,
+      orderIndex: 5,
+      moduleId: module2.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Функціональне тіло',
+      description:
+        'Сильне, витривале, гнучке — тіло, яке працює злагоджено в кожному русі',
+      videoUrl: 'https://vimeo.com/1102183031/f9391fef25',
+      imageUrl: '/cdn/images/6-lesson_1-course.JPG',
+      duration: 1111,
+      orderIndex: 6,
+      moduleId: module2.id,
+    },
+  });
+
   const module3 = await prisma.module.create({
     data: {
       title: 'Баланс і гармонія',
       description:
-        'Покращення рівноваги та координації рухів за допомогою спеціальних вправ.',
+        'Вчимося керувати тілом у просторі, покращуємо координацію, гнучкість та ментальну рівновагу — всередині й зовні',
       orderIndex: 3,
-      imageUrl: '/cdn/images/module-demo.jpg',
+      imageUrl: '/cdn/images/3-module_1-course.jpg',
       courseId,
     },
   });
 
-  // Уроки для модуля 3
   await prisma.lesson.create({
     data: {
-      title: 'Основи балансу',
-      description: 'Базові вправи для покращення рівноваги тіла.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 1800, // 30 хвилин
-      orderIndex: 1,
+      title: 'Прес і гнучкість хребта',
+      description:
+        'Сильний центр і рухливий хребет — основа здорового, легкого тіла',
+      videoUrl: 'https://vimeo.com/1102184147/e9489db4cf',
+      imageUrl: '/cdn/images/7-lesson_1-course.JPG',
+      duration: 1114,
+      orderIndex: 7,
       moduleId: module3.id,
     },
   });
 
   await prisma.lesson.create({
     data: {
-      title: 'Координаційні вправи',
-      description: 'Комплекс вправ для покращення координації рухів.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 1800, // 30 хвилин
-      orderIndex: 2,
+      title: 'Сідниці, ноги',
+      description:
+        'Сила, витривалість і підтягнутість — усе, що потрібно для відчуття опори в тілі',
+      videoUrl: 'https://vimeo.com/1102185163/bd0e336d49',
+      imageUrl: '/cdn/images/8-lesson_1-course.JPG',
+      duration: 1095,
+      orderIndex: 8,
+      moduleId: module3.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'МФР і мобільність стегон',
+      description:
+        'Знімаємо глибоку напругу, відновлюємо рухливість і покращуємо самопочуття',
+      videoUrl: 'https://vimeo.com/1102186390/887649a461',
+      imageUrl: '/cdn/images/9-lesson_1-course.JPG',
+      duration: 975,
+      orderIndex: 9,
+      moduleId: module3.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Пілатес на все тіло',
+      description: 'Гармонія сили, гнучкості та контролю в одному тренуванні',
+      videoUrl: 'https://vimeo.com/1102187359/a7daddfc81',
+      imageUrl: '/cdn/images/10-lesson_1-course.JPG',
+      duration: 1742,
+      orderIndex: 10,
+      moduleId: module3.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Легкість у всьому тілі',
+      description:
+        'Відчуй свободу руху, розслаблення і гармонію в кожній клітині',
+      videoUrl: 'https://vimeo.com/1102189109/577ef7cb25',
+      imageUrl: '/cdn/images/11-lesson_1-course.JPG',
+      duration: 900,
+      orderIndex: 11,
+      moduleId: module3.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Динамічний флоу',
+      description: 'Плавність, енергія та рух — все зливається в один потік',
+      videoUrl: 'https://vimeo.com/1102190093/10d3ed6aca',
+      imageUrl: '/cdn/images/12-lesson_1-course.JPG',
+      duration: 1202,
+      orderIndex: 12,
       moduleId: module3.id,
     },
   });
@@ -345,9 +393,9 @@ async function createModulesAndLessonsCourse1(courseId: number) {
     data: {
       title: 'Рельєф і тонус',
       description:
-        'Закріплення отриманих навичок та планування подальших тренувань.',
+        'Фокус на силовому формуванні фігури: активізація глибоких м’язів, покращення лімфотоку, стабілізація й красивий м’язовий рельєф',
       orderIndex: 4,
-      imageUrl: '/cdn/images/module-demo.jpg',
+      imageUrl: '/cdn/images/4-module_1-course.jpg',
       courseId,
     },
   });
@@ -355,214 +403,205 @@ async function createModulesAndLessonsCourse1(courseId: number) {
   // Уроки для модуля 4
   await prisma.lesson.create({
     data: {
-      title: 'Комплексне тренування',
-      description: "Тренування, яке об'єднує всі вивчені вправи.",
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 3600, // 60 хвилин
-      orderIndex: 1,
+      title: 'Сила і гнучкість',
+      description: 'Баланс напруги й розслаблення. Міць тіла — в його м’якості',
+      videoUrl: 'https://vimeo.com/1102191320/21bac41601',
+      imageUrl: '/cdn/images/13-lesson_1-course.JPG',
+      duration: 1881,
+      orderIndex: 13,
       moduleId: module4.id,
     },
   });
 
   await prisma.lesson.create({
     data: {
-      title: 'Підсумки курсу',
+      title: 'Вільна шия і плечі',
       description:
-        'Підведення підсумків курсу та рекомендації щодо подальших тренувань.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/module-demo.jpg',
-      duration: 1200, // 20 хвилин
-      orderIndex: 2,
-      moduleId: module4.id,
-    },
-  });
-
-  return [module1, module2, module3, module4];
-}
-
-async function createModulesAndLessonsCourse2(courseId: number) {
-  // Модуль 1: Вступ до НейроФіт
-  const module1 = await prisma.module.create({
-    data: {
-      title: 'Вступ до НейроФіт',
-      description:
-        'Знайомство з основами нейрофункціонального тренування та підготовка до курсу.',
-      imageUrl: '/cdn/images/neurofit-module1.jpg',
-      orderIndex: 1,
-      courseId,
-    },
-  });
-
-  // Уроки для модуля 1
-  await prisma.lesson.create({
-    data: {
-      title: 'Філософія НейроФіт',
-      description:
-        'Основні принципи тренувань, ключові концепції та вхідна діагностика.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson1.jpg',
-      duration: 1200, // 20 хвилин
-      orderIndex: 1,
-      moduleId: module1.id,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      title: 'Базові нейрорухи',
-      description:
-        'Основні шаблони рухів та елементи, які будуть використовуватись протягом курсу.',
-      videoUrl: 'https://vimeo.com/1084734911/a21691f716',
-      imageUrl: '/cdn/images/neurofit-lesson2.jpg',
-      duration: 1800, // 30 хвилин
-      orderIndex: 2,
-      moduleId: module1.id,
-    },
-  });
-
-  // Модуль 2: Гнучка сила
-  const module2 = await prisma.module.create({
-    data: {
-      title: 'Гнучка сила',
-      description:
-        "Розвиток пластичності м'язів у поєднанні з контрольованою силою.",
-      imageUrl: '/cdn/images/neurofit-module2.jpg',
-      orderIndex: 2,
-      courseId,
-    },
-  });
-
-  // Уроки для модуля 2
-  await prisma.lesson.create({
-    data: {
-      title: 'Динамічна мобілізація',
-      description: 'Комплекс вправ для розвитку мобільності основних суглобів.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson3.jpg',
-      duration: 2400, // 40 хвилин
-      orderIndex: 1,
-      moduleId: module2.id,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      title: 'Інтегровані шаблони руху',
-      description:
-        "Складні рухові патерни, що задіюють багато м'язових груп одночасно.",
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson4.jpg',
-      duration: 2700, // 45 хвилин
-      orderIndex: 2,
-      moduleId: module2.id,
-    },
-  });
-
-  // Модуль 3: Внутрішня опора
-  const module3 = await prisma.module.create({
-    data: {
-      title: 'Внутрішня опора',
-      description:
-        "Розвиток глибоких м'язів-стабілізаторів та правильної постави.",
-      imageUrl: '/cdn/images/neurofit-module3.jpg',
-      orderIndex: 3,
-      courseId,
-    },
-  });
-
-  // Уроки для модуля 3
-  await prisma.lesson.create({
-    data: {
-      title: 'Ядро стабільності',
-      description:
-        "Вправи для зміцнення м'язів кора та глибоких стабілізаторів.",
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson5.jpg',
-      duration: 2100, // 35 хвилин
-      orderIndex: 1,
-      moduleId: module3.id,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      title: 'Ідеальна постава',
-      description:
-        'Техніки для відновлення та підтримки правильного положення тіла.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson6.jpg',
-      duration: 1800, // 30 хвилин
-      orderIndex: 2,
-      moduleId: module3.id,
-    },
-  });
-
-  // Модуль 4: Нейрокоординація
-  const module4 = await prisma.module.create({
-    data: {
-      title: 'Нейрокоординація',
-      description:
-        'Вдосконалення координації та балансу через складні рухові патерни.',
-      imageUrl: '/cdn/images/neurofit-module4.jpg',
-      orderIndex: 4,
-      courseId,
-    },
-  });
-
-  // Уроки для модуля 4
-  await prisma.lesson.create({
-    data: {
-      title: 'Складні балансові вправи',
-      description:
-        'Тренування рівноваги та пропріоцепції через нестандартні рухи.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson7.jpg',
-      duration: 2400, // 40 хвилин
-      orderIndex: 1,
+        'Знімаємо напругу, відновлюємо легкість і рухливість верхньої частини тіла',
+      videoUrl: 'https://vimeo.com/1102193289/962a2d4f2a',
+      imageUrl: '/cdn/images/15-lesson_1-course.JPG',
+      duration: 806,
+      orderIndex: 15,
       moduleId: module4.id,
     },
   });
 
   await prisma.lesson.create({
     data: {
-      title: 'Комплексне тренування',
-      description:
-        'Фінальне тренування, що поєднує всі елементи курсу в єдину динамічну послідовність.',
-      videoUrl: 'https://vimeo.com/1084741444/b724d62f01',
-      imageUrl: '/cdn/images/neurofit-lesson8.jpg',
-      duration: 3600, // 60 хвилин
-      orderIndex: 2,
+      title: 'Внутрішня частина і сідниці',
+      description: 'Гармонійна форма, стабільність у тазі та красива хода',
+      videoUrl: 'https://vimeo.com/1102194125/c1b887b1fd',
+      imageUrl: '/cdn/images/16-lesson_1-course.JPG',
+      duration: 1119,
+      orderIndex: 16,
       moduleId: module4.id,
     },
   });
 
-  return [module1, module2, module3, module4];
+  await prisma.lesson.create({
+    data: {
+      title: 'Грудний відділ і хребет',
+      description: 'Відкритість, легке дихання і мобільність у кожному русі',
+      videoUrl: 'https://vimeo.com/1102195287/8564fafdb8',
+      imageUrl: '/cdn/images/17-lesson_1-course.JPG',
+      duration: 988,
+      orderIndex: 17,
+      moduleId: module4.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Кісті,руки,шия',
+      description:
+        'Делікатне тренування для зняття напруги, покращення кровотоку та відчуття легкості',
+      videoUrl: 'https://vimeo.com/1102196460/56c5c2828c',
+      imageUrl: '/cdn/images/19-lesson_1-course.JPG',
+      duration: 1095,
+      orderIndex: 19,
+      moduleId: module4.id,
+    },
+  });
+
+  const module5 = await prisma.module.create({
+    data: {
+      title: 'Марафон енергії',
+      description:
+        'Динамічні функціональні тренування, які заряджають енергією, активують метаболізм і вивільняють справжню силу тіла',
+      orderIndex: 5,
+      imageUrl: '/cdn/images/5-module_1-course.jpg',
+      courseId,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Гнучкість тазобедренних',
+      description: 'Розкриття, м’якість і свобода в русі таза та ніг',
+      videoUrl: 'https://vimeo.com/1102208787/35f78133d7',
+      imageUrl: '/cdn/images/21-lesson_1-course.JPG',
+      duration: 1258,
+      orderIndex: 21,
+      moduleId: module5.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Сила спини',
+      description: 'Опора, стабільність і красива постава',
+      videoUrl: 'https://vimeo.com/1102210145/58625b85a0',
+      imageUrl: '/cdn/images/22-lesson_1-course.JPG',
+      duration: 1235,
+      orderIndex: 22,
+      moduleId: module5.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Внутрішній кор',
+      description:
+        'Глибока сила зсередини. Контроль, стабільність і відчуття центру',
+      videoUrl: 'https://vimeo.com/1102211415/5186b5b486',
+      imageUrl: '/cdn/images/23-lesson_1-course.JPG',
+      duration: 982,
+      orderIndex: 23,
+      moduleId: module5.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Челендж все тіло',
+      description: 'Тренування для зміцнення, гнучкості та енергії всього тіла',
+      videoUrl: 'https://vimeo.com/1102212535/fb43b88c5a',
+      imageUrl: '/cdn/images/24-lesson_1-course.JPG',
+      duration: 1264,
+      orderIndex: 24,
+      moduleId: module5.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Челендж все тіло',
+      description: 'Це не просто тренування — це шлях до нової версії себе!',
+      videoUrl: 'https://vimeo.com/1102214184/dc1064b0c5',
+      imageUrl: '/cdn/images/26-lesson_1-course.JPG',
+      duration: 1023,
+      orderIndex: 26,
+      moduleId: module5.id,
+    },
+  });
+
+  await prisma.lesson.create({
+    data: {
+      title: 'Функціональне флоу',
+      description:
+        'Цілісність, плавність і максимальна інтеграція тіла та свідомості. Цей потік допоможе відчути цілісність і гармонію у всьому тілі, покращити координацію та енергію',
+      videoUrl: 'https://vimeo.com/1102215389/af9fec46d9',
+      imageUrl: '/cdn/images/27-lesson_1-course.JPG',
+      duration: 1212,
+      orderIndex: 27,
+      moduleId: module5.id,
+    },
+  });
+
+  return [module1, module2, module3, module4, module5];
 }
 
 async function createBaseEquipment() {
   console.log('Створення базового набору обладнання...');
 
   const equipmentItems = [
+    // 0
     {
       name: 'Гантелі',
       description: 'Гантелі',
-      imageUrl: '/cdn/images/equip-1.png',
+      imageUrl: '/cdn/images/equip-gantel.webp',
     },
+
+    // 1
     {
-      name: 'Скакалка',
-      description: 'Скакалка',
-      imageUrl: '/cdn/images/equip-2.png',
+      name: 'Плоский Ролл',
+      description: 'Плоский Ролл',
+      imageUrl: '/cdn/images/equip-roll.jpg',
     },
+
+    // 2
     {
-      name: 'Килимок',
-      description: 'Килимок',
-      imageUrl: '/cdn/images/equip-3.png',
+      name: 'Резинка дя пілатесу',
+      description: 'Резинка дя пілатесу',
+      imageUrl: '/cdn/images/equip-elastic-long.webp',
     },
+
+    // 3
     {
-      name: 'Ролл',
-      description: 'Ролл',
-      imageUrl: '/cdn/images/equip-4.png',
+      name: 'М’яч для пілтесу',
+      description: 'М’яч для пілтесу',
+      imageUrl: '/cdn/images/equip-ball.webp',
+    },
+
+    // 4
+    {
+      name: 'Резинка кільцева',
+      description: 'Резинка кільцева',
+      imageUrl: '/cdn/images/equip-elastic-long.webp',
+    },
+
+    // 5
+    {
+      name: "Тенісний м'яч",
+      description: "Тенісний м'яч",
+      imageUrl: '/cdn/images/equip-tennis.webp',
+    },
+
+    // 6
+    {
+      name: 'Блок для йоги',
+      description: 'Блок для йоги',
+      imageUrl: '/cdn/images/equip-yoga-block.webp',
     },
   ];
 
@@ -578,7 +617,6 @@ async function createBaseEquipment() {
   return createdEquipment;
 }
 
-// Функція для призначення обладнання курсу
 async function assignEquipmentToCourse(
   courseId: number,
   equipmentIds: number[],
