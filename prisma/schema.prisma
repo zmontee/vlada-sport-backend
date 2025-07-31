@@ -242,8 +242,8 @@ model GeneralReview {
   createdAt      DateTime @default(now())
 
   // Зв'язок з користувачем
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int?
 }
 
 // Модель для покупок курсів

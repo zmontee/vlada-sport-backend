@@ -112,11 +112,10 @@ async function main() {
 
   // Призначаємо бенефіти курсу
   const benefitIds = benefits.map(benefit => benefit.id);
-
   await assignBenefitsToCourse(course1.id, benefitIds);
 
-  console.log('Додавання демо-відгуку...');
-  await createReview(adminUser.id, course1.id);
+  console.log('Додавання відгуків...');
+  await createReviews(adminUser.id, course1.id);
 
   console.log('Створення покупки курсу для адміністратора...');
   await createPurchase(adminUser.id, course1.id);
@@ -746,14 +745,40 @@ async function assignBenefitsToCourse(courseId: number, benefitIds: number[]) {
   }
 }
 
-async function createReview(userId: number, courseId: number) {
-  await prisma.review.create({
+async function createReviews() {
+  await prisma.generalReview.create({
     data: {
       rating: 5,
       comment:
         'Тут усе — з такою любов’ю! Тренування м’які, але ефективні, після них я не валяюсь без сил, а навпаки — відчуваю легкість і радість. Нарешті зникло відчуття, що я “щось винна” своєму тілу.',
-      userId,
-      courseId,
+    },
+  });
+  // await prisma.generalReview.create({
+  //   data: {
+  //     rating: 5,
+  //     comment:
+  //       'Ідеальне поєднання сили та гнучкості. Функціональні вправи - влучно в ціль, а пілатес додає усвідомленості та витонченості руху. Дуже потужний курс!',
+  //   },
+  // });
+  await prisma.generalReview.create({
+    data: {
+      rating: 5,
+      comment:
+        'Можу з власного досвіду вже сказати і порівняти, коли займалася саме з Владою, то все було набагато краще і при тому у всіх сферах, інколи авжеж були форс мажорні обставини, але Влада ти, як чарівна паличка - все швидко виправляла!',
+    },
+  });
+  await prisma.generalReview.create({
+    data: {
+      rating: 5,
+      comment:
+        'Не знаю, мені всеодно важко робити тренування, які б легкі вони не були. Але ця креативність і відчуття після змушують мене продовжувати.',
+    },
+  });
+  await prisma.generalReview.create({
+    data: {
+      rating: 5,
+      comment:
+        'Владині тренування це навіть не тренування, а якесь перевтілення, що ти робиш з людьми?)',
     },
   });
 }

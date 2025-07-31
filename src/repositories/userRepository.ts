@@ -21,8 +21,17 @@ const userRepository = {
   },
 
   update: async (id: number, data: Prisma.UserUpdateInput): Promise<User> => {
-    // TODO: Implement this method
-    throw new Error('Method not implemented');
+    return prisma.user.update({
+      where: { id },
+      data,
+    });
+  },
+
+  updateImage: async (id: number, imageUrl: string): Promise<User> => {
+    return prisma.user.update({
+      where: { id },
+      data: { imageUrl },
+    });
   },
 
   delete: async (id: number): Promise<void> => {

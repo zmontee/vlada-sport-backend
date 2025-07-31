@@ -30,3 +30,18 @@ export interface CreateUserDTO {
   role: UserRole;
   imageUrl?: string;
 }
+
+export interface UpdateUserDTO {
+  name?: string;
+  surname?: string;
+  phoneNumber?: string;
+  sex?: string;
+  birthDate?: string;
+  experience?: string;
+  weight?: number;
+  imageUrl?: string;
+}
+
+export interface UpdateUserImageDTO {
+  imageUrl: string;
+}

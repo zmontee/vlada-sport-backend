@@ -8,9 +8,9 @@ import userRouter from '@/routes/users';
 import cdnRouter from '@/routes/cdn';
 import courseRouter from '@/routes/courses';
 import purchaseRouter from '@/routes/purchase';
-import progress from '@/routes/progress';
 import progressRouter from '@/routes/progress';
 import mailRouter from '@/routes/mail';
+import reviewRouter from '@/routes/review';
 
 dotenv.config();
 
@@ -36,6 +36,7 @@ app.use('/courses', courseRouter);
 app.use('/purchase', purchaseRouter);
 app.use('/progress', progressRouter);
 app.use('/mail', mailRouter);
+app.use('/reviews', reviewRouter);
 
 app.use(errorHandler);
 
