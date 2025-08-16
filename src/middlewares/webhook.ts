@@ -51,6 +51,75 @@ export const rawBodyMiddleware = (
   }
 };
 
+export const verifyMonobankWebhookSimple = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log('=== verifyMonobankWebhookSimple started ===');
+
+    const xSign = req.headers['x-sign'] as string;
+    const rawBody = typeof req.body === 'string' ? req.body : null;
+
+    console.log('X-Sign header present:', !!xSign);
+    console.log('Raw body type:', typeof req.body);
+    console.log('Raw body present:', !!rawBody);
+    console.log('Raw body length:', rawBody?.length);
+
+    if (!xSign) {
+      console.error('Missing X-Sign header in webhook');
+      throw createHttpError(400, 'Missing X-Sign header');
+    }
+
+    if (!rawBody) {
+      console.error('Missing raw body for signature verification');
+      console.log('req.body:', req.body);
+      throw createHttpError(400, 'Missing request body');
+    }
+
+    console.log('Starting signature verification...');
+    console.log('Raw body preview:', rawBody.substring(0, 200));
+
+    // Верифікуємо підпис
+    const isValidSignature = await monobankService.verifyWebhookSignature(
+      rawBody,
+      xSign
+    );
+
+    console.log('Signature verification result:', isValidSignature);
+
+    if (!isValidSignature) {
+      console.error('Invalid webhook signature');
+      console.error('X-Sign:', xSign);
+      console.error('Body used for verification:', rawBody);
+      throw createHttpError(401, 'Invalid webhook signature');
+    }
+
+    console.log('Webhook signature verified successfully');
+
+    // Парсимо JSON для контролера
+    try {
+      req.body = JSON.parse(rawBody);
+      req.rawBody = rawBody; // Зберігаємо raw body для контролера
+    } catch (error) {
+      console.error('Failed to parse webhook JSON:', error);
+      throw createHttpError(400, 'Invalid JSON');
+    }
+
+    next();
+  } catch (error) {
+    console.error('Webhook verification error:', error);
+
+    // Завжди повертаємо 200 для Monobank щоб уникнути повторних спроб
+    res.status(200).json({
+      status: 'error',
+      error:
+        error instanceof Error ? error.message : 'Webhook verification failed',
+    });
+  }
+};
+
 // Middleware для верифікації підпису Monobank webhook
 export const verifyMonobankWebhook = async (
   req: Request,
