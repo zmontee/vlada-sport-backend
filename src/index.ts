@@ -18,9 +18,9 @@ dotenv.config();
 
 const app = express();
 
-app.use(rawBodyMiddleware);
-
+// Просто стандартні middleware без rawBodyMiddleware
 app.use(express.json());
+
 app.use(cookieParser());
 app.use(
   cors({

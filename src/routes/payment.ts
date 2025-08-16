@@ -1,10 +1,7 @@
 import express, { Router } from 'express';
 import paymentController from '@/controllers/paymentController';
 import { authenticateJWT } from '@/middlewares/auth';
-import {
-  verifyMonobankWebhook,
-  verifyMonobankWebhookWithRaw,
-} from '@/middlewares/webhook';
+import { verifyMonobankWebhook, verifyMonobankWebhookSimple } from '@/middlewares/webhook';
 
 const paymentRouter = Router();
 
@@ -21,7 +18,8 @@ paymentRouter.get(
 paymentRouter.post(
   '/webhook',
   // express.raw({ type: 'application/json' }),
-  verifyMonobankWebhook,
+  express.text({ type: '*/*' }),
+  verifyMonobankWebhookSimple,
   paymentController.webhook
 );
 
