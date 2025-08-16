@@ -18,7 +18,7 @@ dotenv.config();
 
 const app = express();
 
-// app.use(rawBodyMiddleware);
+app.use(rawBodyMiddleware);
 
 app.use(express.json());
 app.use(cookieParser());

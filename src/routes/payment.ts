@@ -20,8 +20,8 @@ paymentRouter.get(
 // Webhook від Monobank (без аутентифікації)
 paymentRouter.post(
   '/webhook',
-  express.raw({ type: 'application/json' }),
-  verifyMonobankWebhookWithRaw,
+  // express.raw({ type: 'application/json' }),
+  verifyMonobankWebhook,
   paymentController.webhook
 );
 

@@ -8,22 +8,30 @@ export const rawBodyMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  if (req.path === '/payments/webhook') {
+  if (req.path === '/payments/webhook' && req.method === 'POST') {
     console.log('webhook received, parsing body in rawBodyMiddleware');
-    let data = '';
 
-    req.setEncoding('utf8');
-    req.on('data', chunk => {
-      data += chunk;
+    const chunks: Buffer[] = [];
+
+    // НЕ встановлюємо encoding, працюємо з raw bytes
+    req.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
     });
 
     req.on('end', () => {
-      console.log('rawBodyMiddleware - data received:', data.length, 'chars');
-      req.rawBody = data;
+      const rawBuffer = Buffer.concat(chunks);
+      const rawBody = rawBuffer.toString('utf8');
+
+      console.log(
+        'rawBodyMiddleware - data received:',
+        rawBody.length,
+        'chars'
+      );
+      req.rawBody = rawBody;
 
       // Парсимо JSON для req.body
       try {
-        req.body = JSON.parse(data);
+        req.body = JSON.parse(rawBody);
         console.log('rawBodyMiddleware - JSON parsed successfully');
       } catch (error) {
         console.error('Failed to parse webhook JSON:', error);
