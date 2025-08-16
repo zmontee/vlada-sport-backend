@@ -1,7 +1,10 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import paymentController from '@/controllers/paymentController';
 import { authenticateJWT } from '@/middlewares/auth';
-import { verifyMonobankWebhook } from '@/middlewares/webhook';
+import {
+  verifyMonobankWebhook,
+  verifyMonobankWebhookWithRaw,
+} from '@/middlewares/webhook';
 
 const paymentRouter = Router();
 
@@ -17,7 +20,8 @@ paymentRouter.get(
 // Webhook від Monobank (без аутентифікації)
 paymentRouter.post(
   '/webhook',
-  verifyMonobankWebhook,
+  express.raw({ type: 'application/json' }),
+  verifyMonobankWebhookWithRaw,
   paymentController.webhook
 );
 

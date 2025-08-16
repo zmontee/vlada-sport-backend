@@ -18,6 +18,8 @@ dotenv.config();
 
 const app = express();
 
+// app.use(rawBodyMiddleware);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -26,8 +28,6 @@ app.use(
     credentials: true,
   })
 );
-
-app.use(rawBodyMiddleware);
 
 app.get('/', (req, res) => {
   res.send('Server is running');
