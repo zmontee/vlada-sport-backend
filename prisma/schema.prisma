@@ -39,6 +39,7 @@ model User {
 
   // Нові зв'язки
   purchases      Purchase[]
+  payments       Payment[]
   reviews        Review[]
   generalReviews GeneralReview[]
   progress       CourseProgress[]
@@ -224,13 +225,17 @@ model Review {
   afterPhotoUrl  String?
   createdAt      DateTime @default(now())
 
+  authorName     String?
+  authorSurname  String?
+  authorExperience String?
+
   // Зв'язки
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   Int
+  user     User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int?
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId Int
 
-  @@unique([userId, courseId])
+  // @@unique([userId, courseId])
 }
 
 model GeneralReview {
@@ -240,6 +245,10 @@ model GeneralReview {
   beforePhotoUrl String?
   afterPhotoUrl  String?
   createdAt      DateTime @default(now())
+
+  authorName     String?
+  authorSurname  String?
+  authorExperience String?
 
   // Зв'язок з користувачем
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -320,3 +329,20 @@ model LessonProgress {
 
   @@unique([userId, lessonId])
 }
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  courseIds Int[]    // Масив ID курсів
+  amount    Float    // Сума в гривнях
+  invoiceId String   @unique // ID інвойсу від Monobank
+  paymentId String?  // ID платежу від Monobank (приходить у webhook)
+  status    String   // created, processing, success, failure, etc.
+  modifiedDate DateTime? // Дата зміни статусу від Monobank
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Зв'язки
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+

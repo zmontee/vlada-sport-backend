@@ -5,12 +5,14 @@ import cookieParser from 'cookie-parser';
 import { errorHandler } from '@/middlewares/errorHandler';
 import authRouter from '@/routes/auth';
 import userRouter from '@/routes/users';
-import cdnRouter from '@/routes/cdn';
 import courseRouter from '@/routes/courses';
 import purchaseRouter from '@/routes/purchase';
 import progressRouter from '@/routes/progress';
 import mailRouter from '@/routes/mail';
 import reviewRouter from '@/routes/review';
+import path from 'path';
+import paymentRouter from '@/routes/payment';
+import { rawBodyMiddleware } from '@/middlewares/webhook';
 
 dotenv.config();
 
@@ -25,18 +27,22 @@ app.use(
   })
 );
 
+app.use(rawBodyMiddleware);
+
 app.get('/', (req, res) => {
   res.send('Server is running');
 });
 
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
-app.use('/cdn', cdnRouter);
+// app.use('/cdn', cdnRouter);
 app.use('/courses', courseRouter);
 app.use('/purchase', purchaseRouter);
 app.use('/progress', progressRouter);
 app.use('/mail', mailRouter);
 app.use('/reviews', reviewRouter);
+app.use('/cdn', express.static(path.join(process.cwd(), 'cdn')));
+app.use('/payments', paymentRouter);
 
 app.use(errorHandler);
 
