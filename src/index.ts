@@ -18,10 +18,12 @@ dotenv.config();
 
 const app = express();
 
+app.use('/payments', paymentRouter);
+
 // Просто стандартні middleware без rawBodyMiddleware
 app.use(express.json());
-
 app.use(cookieParser());
+
 app.use(
   cors({
     origin: 'http://localhost:3000',
@@ -32,7 +34,6 @@ app.use(
 app.get('/', (req, res) => {
   res.send('Server is running');
 });
-
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
 // app.use('/cdn', cdnRouter);
@@ -42,7 +43,6 @@ app.use('/progress', progressRouter);
 app.use('/mail', mailRouter);
 app.use('/reviews', reviewRouter);
 app.use('/cdn', express.static(path.join(process.cwd(), 'cdn')));
-app.use('/payments', paymentRouter);
 
 app.use(errorHandler);
 

@@ -9,10 +9,16 @@ import {
 const paymentRouter = Router();
 
 // Створення платежу (потребує аутентифікації)
-paymentRouter.post('/create', authenticateJWT, paymentController.createPayment);
+paymentRouter.post(
+  '/create',
+  express.json(),
+  authenticateJWT,
+  paymentController.createPayment
+);
 
 paymentRouter.get(
   '/status/:invoiceId',
+  express.json(),
   authenticateJWT,
   paymentController.getPaymentStatus
 );
