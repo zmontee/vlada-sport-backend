@@ -16,9 +16,9 @@ interface PurchaseCoursesParams {
   paymentId?: string;
 }
 
-const purchaseService = {
+class PurchaseService {
   // Створення платежу (існуючий метод без змін)
-  createPayment: async (params: CreatePaymentParams) => {
+  async createPayment(params: CreatePaymentParams) {
     const { userId, courseIds } = params;
 
     // Перевірити існування курсів та отримати їх ціни
@@ -54,7 +54,7 @@ const purchaseService = {
     // Створити інвойс у Monobank
     const invoice = await monobankService.createInvoice({
       // amount: amountInKopiyky,
-      amount: 100, // Це просто приклад, ви можете використовувати вашу суму
+      amount: 100,
       ccy: 980, // гривня
       merchantPaymInfo: {
         reference: `courses-${userId}-${Date.now()}`,
@@ -94,9 +94,9 @@ const purchaseService = {
         price: course.price,
       })),
     };
-  },
+  }
 
-  getPaymentStatus: async (invoiceId: string, userId: number) => {
+  async getPaymentStatus(invoiceId: string, userId: number) {
     // Спочатку знаходимо платіж у нашій базі даних
     const payment = await paymentRepository.findUserPaymentByInvoiceId(
       invoiceId,
@@ -161,10 +161,10 @@ const purchaseService = {
       createdAt: payment.createdAt,
       updatedAt: payment.updatedAt,
     };
-  },
+  }
 
   // Оновлена обробка webhook від Monobank з перевіркою modifiedDate
-  processWebhook: async (webhookData: any) => {
+  async processWebhook(webhookData: any) {
     const { invoiceId, status, modifiedDate, paymentId } = webhookData;
 
     console.log(
@@ -222,10 +222,10 @@ const purchaseService = {
       }
       throw error;
     }
-  },
+  }
 
   // Існуючий метод для створення покупок (без змін)
-  purchaseCourses: async (params: PurchaseCoursesParams) => {
+  async purchaseCourses(params: PurchaseCoursesParams) {
     const { userId, courseIds, paymentMethod, paymentId } = params;
 
     // Перевірити існування курсів
@@ -275,7 +275,8 @@ const purchaseService = {
     );
 
     return purchases;
-  },
-};
+  }
+}
 
+const purchaseService = new PurchaseService();
 export default purchaseService;

@@ -47,6 +47,7 @@ const paymentRepository = {
       },
       select: {
         id: true,
+        userId: true,
         invoiceId: true,
         status: true,
         amount: true,

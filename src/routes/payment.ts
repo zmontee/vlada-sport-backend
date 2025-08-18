@@ -27,7 +27,7 @@ paymentRouter.get(
 paymentRouter.post(
   '/webhook',
   // express.raw({ type: 'application/json' }),
-  express.text({ type: '*/*' }),
+  express.text({ type: 'application/json' }), // Тільки application/json як text
   verifyMonobankWebhookSimple,
   paymentController.webhook
 );
