@@ -30,7 +30,7 @@ const authService = {
         validatedData.email
       );
       if (existingUser) {
-        throw createHttpError(409, 'User with this email already exists');
+        throw createHttpError(409, 'Користувач з таким email вже існує');
       }
 
       // if (validatedData.phoneNumber) {
