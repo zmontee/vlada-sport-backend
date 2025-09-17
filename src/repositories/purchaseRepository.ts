@@ -52,9 +52,7 @@ const purchaseRepository = {
   },
 
   initializeCourseProgress: async (userId: number, courseId: number) => {
-    // Start a transaction to ensure all progress records are created atomically
     return prisma.$transaction(async tx => {
-      // 1. Get all modules for this course, ordered by orderIndex
       const modules = await tx.module.findMany({
         where: { courseId },
         orderBy: { orderIndex: 'asc' },

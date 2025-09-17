@@ -33,13 +33,6 @@ const authService = {
         throw createHttpError(409, 'Користувач з таким email вже існує');
       }
 
-      // if (validatedData.phoneNumber) {
-      //   const phoneRegex = /^\+?[\d\s-]{10,}$/;
-      //   if (!phoneRegex.test(validatedData.phoneNumber)) {
-      //     throw createHttpError(400, 'Phone number validation error');
-      //   }
-      // }
-
       const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
       const newUser = await userRepository.create({
@@ -206,16 +199,6 @@ const authService = {
   getUserPurchasedCourses: async (userId: number) => {
     return purchaseRepository.findUserPurchasedCourses(userId);
   },
-
-  // verifyToken: async (token: string): Promise<TokenPayload> => {
-  //   // TODO: Implement this method
-  //   throw new Error('Method not implemented');
-  // },
-  //
-  // revokeRefreshToken: async (refreshToken: string): Promise<void> => {
-  //   // TODO: Implement this method
-  //   throw new Error('Method not implemented');
-  // },
 };
 
 export default authService;

@@ -7,7 +7,6 @@ import type {
 import reviewRepository from '@/repositories/reviewRepository';
 
 const reviewService = {
-  // Методи для загальних відгуків
   getAllGeneralReviews: async () => {
     try {
       return await reviewRepository.findAllGeneralReviews();
@@ -30,15 +29,38 @@ const reviewService = {
     }
   },
 
-  createGeneralReview: async (data: CreateGeneralReviewDTO) => {
+  createGeneralReview: async (
+    data: CreateGeneralReviewDTO,
+    authenticatedUserId?: number
+  ) => {
     try {
-      if (!data.userId && (!data.authorName || !data.authorSurname)) {
-        throw new Error(
-          'Необхідно вказати автора відгуку (userId або дані анонімного автора)'
-        );
+      let reviewData = { ...data };
+
+      if (authenticatedUserId) {
+        const user = await reviewRepository.findUserById(authenticatedUserId);
+        if (user) {
+          reviewData = {
+            rating: data.rating,
+            comment: data.comment,
+            beforePhotoUrl: data.beforePhotoUrl,
+            afterPhotoUrl: data.afterPhotoUrl,
+            userId: user.id,
+
+            authorName: undefined,
+            authorSurname: undefined,
+            authorExperience: undefined,
+            authorSex: undefined,
+          };
+        }
+      } else {
+        if (!data.authorName || !data.authorSurname) {
+          throw new Error(
+            "Для анонімного відгуку необхідно вказати ім'я та прізвище автора"
+          );
+        }
       }
 
-      return await reviewRepository.createGeneralReview(data);
+      return await reviewRepository.createGeneralReview(reviewData);
     } catch (error) {
       throw new Error(`Не вдалося створити відгук: ${error.message}`);
     }
@@ -72,7 +94,6 @@ const reviewService = {
     }
   },
 
-  // Методи для відгуків до курсів
   getAllCourseReviews: async () => {
     try {
       return await reviewRepository.findAllCourseReviews();
@@ -107,16 +128,39 @@ const reviewService = {
     }
   },
 
-  createCourseReview: async (data: CreateCourseReviewDTO) => {
+  createCourseReview: async (
+    data: CreateCourseReviewDTO,
+    authenticatedUserId?: number
+  ) => {
     try {
-      // Валідація даних - має бути або userId, або дані анонімного автора
-      if (!data.userId && (!data.authorName || !data.authorSurname)) {
-        throw new Error(
-          'Необхідно вказати автора відгуку (userId або дані анонімного автора)'
-        );
+      let reviewData = { ...data };
+
+      if (authenticatedUserId) {
+        const user = await reviewRepository.findUserById(authenticatedUserId);
+        if (user) {
+          reviewData = {
+            rating: data.rating,
+            comment: data.comment,
+            beforePhotoUrl: data.beforePhotoUrl,
+            afterPhotoUrl: data.afterPhotoUrl,
+            courseId: data.courseId,
+            userId: user.id,
+
+            authorName: undefined,
+            authorSurname: undefined,
+            authorExperience: undefined,
+            authorSex: undefined,
+          };
+        }
+      } else {
+        if (!data.authorName || !data.authorSurname) {
+          throw new Error(
+            "Для анонімного відгуку необхідно вказати ім'я та прізвище автора"
+          );
+        }
       }
 
-      return await reviewRepository.createCourseReview(data);
+      return await reviewRepository.createCourseReview(reviewData);
     } catch (error) {
       throw new Error(`Не вдалося створити відгук: ${error.message}`);
     }

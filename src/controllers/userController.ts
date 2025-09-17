@@ -1,7 +1,13 @@
 import type { NextFunction, Request, Response } from 'express';
+import path from 'path';
 import userService from '@/services/userService';
 import { z } from 'zod';
 import createHttpError from 'http-errors';
+import {
+  deleteFile,
+  getFilenameFromUrl,
+  getUserImageUrl,
+} from '@/utils/fileUpload';
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
@@ -53,7 +59,6 @@ const usersController = {
         throw createHttpError(401, 'User not authenticated');
       }
 
-      // Валідація вхідних даних
       const validationResult = updateUserSchema.safeParse(req.body);
 
       if (!validationResult.success) {
@@ -83,20 +88,52 @@ const usersController = {
         throw createHttpError(401, 'User not authenticated');
       }
 
-      // Валідація вхідних даних
-      const validationResult = updateUserImageSchema.safeParse(req.body);
-
-      if (!validationResult.success) {
-        throw createHttpError(400, 'Invalid image data');
+      if (!req.file) {
+        throw createHttpError(400, 'Зображення не завантажено');
       }
 
-      const updatedUser = await userService.updateUserImage(
-        userId,
-        validationResult.data
-      );
+      const currentUser = await userService.getUserById(userId);
 
-      res.status(200).json(updatedUser);
+      const newImageUrl = getUserImageUrl(req.file.filename);
+
+      if (!newImageUrl) {
+        throw createHttpError(500, 'Помилка при створенні URL зображення');
+      }
+
+      const updatedUser = await userService.updateUserImage(userId, {
+        imageUrl: newImageUrl,
+      });
+
+      if (currentUser && currentUser.imageUrl) {
+        const oldFilename = getFilenameFromUrl(currentUser.imageUrl);
+        if (oldFilename) {
+          const oldFilePath = path.join(
+            process.cwd(),
+            'cdn',
+            'users',
+            oldFilename
+          );
+          deleteFile(oldFilePath);
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Зображення профілю успішно оновлено',
+        user: updatedUser,
+        imageUrl: newImageUrl,
+      });
     } catch (error) {
+      // Якщо сталася помилка, видаляємо завантажений файл
+      if (req.file) {
+        const filePath = path.join(
+          process.cwd(),
+          'cdn',
+          'users',
+          req.file.filename
+        );
+        deleteFile(filePath);
+      }
       next(error);
     }
   },

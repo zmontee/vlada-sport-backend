@@ -1,4 +1,3 @@
-// src/controllers/reviewController.ts
 import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import reviewService from '@/services/reviewService';
@@ -17,14 +16,14 @@ import {
 import fs from 'fs';
 import path from 'path';
 
-// Схеми валідації для загальних відгуків
 const createGeneralReviewSchema = z.object({
   rating: z.coerce.number().int().min(1).max(5),
   comment: z.string().min(3),
-  userId: z.coerce.number().int().positive().optional(),
+  // userId: z.coerce.number().int().positive().optional(),
   authorName: z.string().min(2).optional(),
   authorSurname: z.string().min(2).optional(),
   authorExperience: z.string().optional(),
+  authorSex: z.enum(['MALE', 'FEMALE']).optional(),
 });
 
 const updateGeneralReviewSchema = z.object({
@@ -34,6 +33,7 @@ const updateGeneralReviewSchema = z.object({
   authorName: z.string().min(2).nullish(),
   authorSurname: z.string().min(2).nullish(),
   authorExperience: z.string().nullish(),
+  authorSex: z.enum(['MALE', 'FEMALE']).nullish(),
 });
 
 const createCourseReviewSchema = createGeneralReviewSchema.extend({
@@ -105,6 +105,16 @@ const reviewController = {
         });
       }
 
+      const data = validationResult.data;
+      const authenticatedUserId = req.user?.userId;
+
+      if (!authenticatedUserId && (!data.authorName || !data.authorSurname)) {
+        throw createHttpError(
+          400,
+          "Для анонімного відгуку необхідно вказати ім'я та прізвище автора"
+        );
+      }
+
       // Файли доступні через req.files (завдяки multer)
       const files = req.files as
         | {
@@ -123,7 +133,10 @@ const reviewController = {
           : undefined,
       };
 
-      const newReview = await reviewService.createGeneralReview(reviewData);
+      const newReview = await reviewService.createGeneralReview(
+        reviewData,
+        authenticatedUserId
+      );
 
       res.status(201).json(newReview);
     } catch (error) {
@@ -375,7 +388,6 @@ const reviewController = {
     next: NextFunction
   ) => {
     try {
-      // Валідація текстових полів
       const validationResult = createCourseReviewSchema.safeParse(req.body);
 
       if (!validationResult.success) {
@@ -384,7 +396,16 @@ const reviewController = {
         });
       }
 
-      // Файли доступні через req.files (завдяки multer)
+      const data = validationResult.data;
+      const authenticatedUserId = req.user?.userId;
+
+      if (!authenticatedUserId && (!data.authorName || !data.authorSurname)) {
+        throw createHttpError(
+          400,
+          "Для анонімного відгуку необхідно вказати ім'я та прізвище автора"
+        );
+      }
+
       const files = req.files as
         | {
             beforePhoto?: Express.Multer.File[];
@@ -393,7 +414,7 @@ const reviewController = {
         | undefined;
 
       const reviewData: CreateCourseReviewDTO = {
-        ...validationResult.data,
+        ...data,
         beforePhotoUrl: files?.beforePhoto?.[0]
           ? getFileUrl(files.beforePhoto[0].filename)
           : undefined,
@@ -402,7 +423,10 @@ const reviewController = {
           : undefined,
       };
 
-      const newReview = await reviewService.createCourseReview(reviewData);
+      const newReview = await reviewService.createCourseReview(
+        reviewData,
+        authenticatedUserId
+      );
 
       res.status(201).json(newReview);
     } catch (error) {

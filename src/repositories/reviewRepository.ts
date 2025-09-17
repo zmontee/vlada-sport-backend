@@ -19,6 +19,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
       },
@@ -39,6 +40,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
       },
@@ -56,6 +58,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
       },
@@ -74,6 +77,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
       },
@@ -86,7 +90,6 @@ const reviewRepository = {
     });
   },
 
-  // Методи для відгуків до курсів
   findAllCourseReviews: async () => {
     return prisma.review.findMany({
       include: {
@@ -97,6 +100,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
         course: {
@@ -124,6 +128,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
         course: {
@@ -150,6 +155,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
         course: {
@@ -177,6 +183,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
         course: {
@@ -202,6 +209,7 @@ const reviewRepository = {
             surname: true,
             imageUrl: true,
             experience: true,
+            sex: true,
           },
         },
         course: {
@@ -218,6 +226,19 @@ const reviewRepository = {
   deleteCourseReview: async (id: number) => {
     return prisma.review.delete({
       where: { id },
+    });
+  },
+
+  findUserById: async (id: number) => {
+    return prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        surname: true,
+        experience: true,
+        sex: true,
+      },
     });
   },
 };

@@ -39,7 +39,6 @@ const courseController = {
     next: NextFunction
   ) => {
     try {
-      // The user ID comes from the JWT token via the auth middleware
       const userId = req.user?.userId;
 
       if (!userId) {

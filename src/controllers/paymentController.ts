@@ -7,6 +7,46 @@ interface CreatePaymentRequest {
 }
 
 const paymentController = {
+  // Test controller method to assign courses directly without payment (for development)
+  assignCoursesTest: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        throw createHttpError(401, 'User not authenticated');
+      }
+
+      const { courseIds } = req.body as CreatePaymentRequest;
+
+      if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+        throw createHttpError(400, 'Valid course IDs array is required');
+      }
+
+      // Directly assign courses to user without payment processing
+      const purchases = await purchaseService.purchaseCourses({
+        userId,
+        courseIds,
+        paymentMethod: 'test',
+        paymentId: `test-${userId}-${Date.now()}`,
+      });
+
+      res.status(201).json({
+        status: 'success',
+        message: 'Courses assigned successfully (test mode)',
+        data: {
+          purchases: purchases.map(purchase => ({
+            id: purchase.id,
+            courseId: purchase.courseId,
+            amount: purchase.amount,
+            purchaseDate: purchase.purchaseDate,
+          })),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   createPayment: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.userId;
@@ -64,7 +104,7 @@ const paymentController = {
     }
   },
 
-  webhook: async (req: Request, res: Response, next: NextFunction) => {
+  webhook: async (req: Request, res: Response) => {
     try {
       console.log('=== Monobank Webhook Received ===');
       console.log('Headers:', JSON.stringify(req.headers, null, 2));

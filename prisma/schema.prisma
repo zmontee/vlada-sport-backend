@@ -36,8 +36,8 @@ model User {
 
   oauthAccounts OAuthAccount[]
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
-  // Нові зв'язки
   purchases      Purchase[]
   payments       Payment[]
   reviews        Review[]
@@ -68,7 +68,18 @@ model RefreshToken {
   expiresAt DateTime
 }
 
-// Модель для курсів
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("password_reset_tokens")
+}
+
 model Course {
   id                    Int      @id @default(autoincrement())
   title                 String
@@ -82,24 +93,21 @@ model Course {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
-  // Зв'язки
   modules   Module[]
-  equipment CourseEquipment[] // Оновлений зв'язок
+  equipment CourseEquipment[]
   purchases Purchase[]
   reviews   Review[]
   progress  CourseProgress[]
   benefits  CourseBenefits[]
 }
 
-// Модель для модулів
 model Module {
   id          Int     @id @default(autoincrement())
   title       String
   description String  @db.Text
   imageUrl    String?
-  orderIndex  Int // Для впорядкування модулів
+  orderIndex  Int
 
-  // Зв'язки
   course            Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId          Int
   lessons           Lesson[]
@@ -110,52 +118,44 @@ model Module {
   @@unique([courseId, orderIndex])
 }
 
-// Модель для уроків
 model Lesson {
   id          Int     @id @default(autoincrement())
   title       String
   description String  @db.Text
   videoUrl    String
   imageUrl    String?
-  duration    Int // Тривалість в секундах
-  orderIndex  Int // Для впорядкування уроків
+  duration    Int
+  orderIndex  Int
 
-  // Зв'язки
   module         Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   moduleId       Int
   lessonProgress LessonProgress[]
-  equipment      LessonEquipment[] // Обладнання для конкретного уроку
+  equipment      LessonEquipment[]
 
   @@unique([moduleId, orderIndex])
 }
 
-// Модель для інвентаря
 model Equipment {
   id          Int     @id @default(autoincrement())
   name        String
   description String? @db.Text
   imageUrl    String?
 
-  // Зв'язок багато-до-багатьох з курсами
   courses CourseEquipment[]
   modules ModuleEquipment[]
   lessons LessonEquipment[]
 }
 
-// Модель для зв'язку між курсом та інвентарем (проміжна таблиця)
 model CourseEquipment {
-  // Зв'язки
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId Int
 
   equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   equipmentId Int
 
-  // Опціональне поле для додаткової інформації
-  quantity Int     @default(1) // Кількість одиниць обладнання, необхідна для курсу
-  notes    String? @db.Text // Додаткові примітки для конкретного курсу
+  quantity Int     @default(1)
+  notes    String? @db.Text
 
-  // Складений первинний ключ
   @@id([courseId, equipmentId])
 }
 
@@ -228,6 +228,7 @@ model Review {
   authorName     String?
   authorSurname  String?
   authorExperience String?
+  authorSex        String?
 
   // Зв'язки
   user     User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -249,6 +250,7 @@ model GeneralReview {
   authorName     String?
   authorSurname  String?
   authorExperience String?
+  authorSex        String?
 
   // Зв'язок з користувачем
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)

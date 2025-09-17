@@ -1,30 +1,30 @@
 import { Router } from 'express';
 import reviewController from '@/controllers/reviewController';
 import { authenticateJWT } from '@/middlewares/auth';
+import { optionalAuth } from '@/middlewares/optionalAuth';
 
 const router = Router();
 
-// Маршрути для загальних відгуків
 router.get('/general', reviewController.getAllGeneralReviews);
 router.get('/general/:id', reviewController.getGeneralReviewById);
 router.post(
   '/general',
+  optionalAuth,
   reviewController.uploadReviewImages,
   reviewController.createGeneralReview
 );
 router.put(
   '/general/:id',
-  authenticateJWT, // Вимагаємо авторизацію для редагування
+  authenticateJWT,
   reviewController.uploadReviewImages,
   reviewController.updateGeneralReview
 );
 router.delete(
   '/general/:id',
-  authenticateJWT, // Вимагаємо авторизацію для видалення
+  authenticateJWT,
   reviewController.deleteGeneralReview
 );
 
-// Маршрути для відгуків до курсів
 router.get('/course', reviewController.getAllCourseReviews);
 router.get('/course/:id', reviewController.getCourseReviewById);
 router.get(
@@ -33,6 +33,7 @@ router.get(
 );
 router.post(
   '/course',
+  optionalAuth,
   reviewController.uploadReviewImages,
   reviewController.createCourseReview
 );

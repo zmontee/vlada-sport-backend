@@ -59,10 +59,9 @@ interface WebhookPayload {
   }>;
 }
 
-// Кешуємо публічний ключ, щоб не запитувати його кожен раз
 let cachedPublicKey: string | null = null;
 let publicKeyLastFetch: number = 0;
-const PUBLIC_KEY_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 години
+const PUBLIC_KEY_CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 const monobankService = {
   createInvoice: async (
@@ -116,7 +115,6 @@ const monobankService = {
   getPublicKey: async (): Promise<string> => {
     const now = Date.now();
 
-    // Використовуємо кешований ключ, якщо він ще актуальний
     if (
       cachedPublicKey &&
       now - publicKeyLastFetch < PUBLIC_KEY_CACHE_DURATION
@@ -152,19 +150,15 @@ const monobankService = {
     signatureBase64: string
   ): Promise<boolean> => {
     try {
-      // Отримати публічний ключ
       const pubKeyBase64 = await this.getPublicKey();
 
-      // Конвертувати підпис та публічний ключ з Base64
       const signatureBuf = Buffer.from(signatureBase64, 'base64');
       const publicKeyBuf = Buffer.from(pubKeyBase64, 'base64');
 
-      // Створити верифікатор
       const verify = crypto.createVerify('SHA256');
       verify.write(webhookBody);
       verify.end();
 
-      // Верифікувати підпис
       const result = verify.verify(publicKeyBuf, signatureBuf);
 
       return result;

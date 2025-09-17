@@ -6,17 +6,19 @@ export interface GeneralReview {
   afterPhotoUrl?: string | null;
   createdAt: Date;
 
-  userId?: number | null;
   authorName?: string | null;
   authorSurname?: string | null;
   authorExperience?: string | null;
+  authorSex?: string | null;
 
+  userId?: number | null;
   user?: {
     id: number;
     name: string;
     surname: string;
     imageUrl?: string | null;
     experience?: string | null;
+    sex: string;
   } | null;
 }
 
@@ -38,6 +40,7 @@ export interface CreateGeneralReviewDTO {
   authorName?: string | null;
   authorSurname?: string | null;
   authorExperience?: string | null;
+  authorSex?: string | null;
 }
 
 export interface CreateCourseReviewDTO extends CreateGeneralReviewDTO {
@@ -53,6 +56,7 @@ export interface UpdateGeneralReviewDTO {
   authorName?: string | null;
   authorSurname?: string | null;
   authorExperience?: string | null;
+  authorSex?: string | null;
 }
 
 export interface UpdateCourseReviewDTO extends UpdateGeneralReviewDTO {

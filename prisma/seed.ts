@@ -9,8 +9,8 @@ async function main() {
   console.log('Очищення існуючих даних...');
   await cleanDatabase();
 
-  console.log('Створення користувача...');
-  const adminUser = await createAdminUser();
+  // console.log('Створення користувача...');
+  // const adminUser = await createAdminUser();
 
   console.log('Створення курсу 1...');
   const course1 = await createCourse1();
@@ -115,10 +115,10 @@ async function main() {
   await assignBenefitsToCourse(course1.id, benefitIds);
 
   console.log('Додавання відгуків...');
-  await createReviews(adminUser.id, course1.id);
+  // await createReviews(adminUser.id, course1.id);
 
   console.log('Створення покупки курсу для адміністратора...');
-  await createPurchase(adminUser.id, course1.id);
+  // await createPurchase(adminUser.id, course1.id);
 
   console.log('Ініціалізацію завершено успішно!');
 }
