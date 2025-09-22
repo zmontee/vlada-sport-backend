@@ -53,8 +53,8 @@ class PurchaseService {
 
     // Створити інвойс у Monobank
     const invoice = await monobankService.createInvoice({
-      // amount: amountInKopiyky,
-      amount: 100,
+      amount: amountInKopiyky,
+      // amount: 100,
       ccy: 980, // гривня
       merchantPaymInfo: {
         reference: `courses-${userId}-${Date.now()}`,
