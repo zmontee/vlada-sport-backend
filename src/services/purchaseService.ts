@@ -49,12 +49,12 @@ class PurchaseService {
 
     // Розрахувати загальну суму
     const totalAmount = courses.reduce((sum, course) => sum + course.price, 0);
-    const amountInKopiyky = Math.round(totalAmount * 100); // конвертувати в копійки
+    const amountInKopiyky = Math.round(totalAmount * 100);
 
     // Створити інвойс у Monobank
     const invoice = await monobankService.createInvoice({
-      // amount: amountInKopiyky,
-      amount: 100,
+      amount: amountInKopiyky,
+      // amount: 100,
       ccy: 980, // гривня
       merchantPaymInfo: {
         reference: `courses-${userId}-${Date.now()}`,

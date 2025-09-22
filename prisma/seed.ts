@@ -192,7 +192,7 @@ async function createCourse1() {
       ],
       level: 'Новачок',
       duration: '1.5 місяці',
-      price: 1500,
+      price: 999,
       imageUrl: '/cdn/images/course-1.jpg',
     },
   });

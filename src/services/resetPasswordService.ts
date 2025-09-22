@@ -23,7 +23,6 @@ const passwordResetService = {
       const user = await userRepository.findByEmail(email);
 
       if (!user) {
-        // Не розкриваємо чи існує користувач з такою поштою
         return {
           message:
             'Якщо користувач з такою поштою існує, йому буде відправлено лист для відновлення паролю',
